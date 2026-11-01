@@ -1,0 +1,256 @@
+/* ESTILOS GENERALES Y RESETS */
+* {
+box-sizing: border-box;
+}
+
+html, body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ENCABEZADO PRINCIPAL */
+header {
+background-color: #519ad6;
+color: white;
+text-align: center;
+padding: 25px 15px;
+}
+header h1 {
+margin: 0;
+font-size: 38px;
+}
+/* MENÚ DE NAVEGACIÓN */
+nav {
+background-color: #172554;
+padding: 12px;
+text-align: center;
+}
+nav a {
+color: white;
+text-decoration: none;
+margin: 0 10px;
+font-weight: bold;
+}
+nav a:hover {
+color: #facc15;
+}
+/* CONTENEDOR Y SECCIONES */
+main {
+max-width: 750px;
+margin: 20px auto;
+padding: 0 15px;
+}
+section {
+background-color: white;
+padding: 20px;
+margin-bottom: 18px;
+border-radius: 12px;
+box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+h2 {
+color: #1d4ed8;
+margin-top: 0;
+}
+/* FORMULARIO Y CAMPOS DE ENTRADA */
+form {
+display: flex;
+
+flex-direction: column;
+gap: 10px;
+}
+input[type="text"] {
+padding: 12px;
+border: 1px solid #cbd5e1;
+border-radius: 6px;
+font-size: 15px;
+}
+button {
+background-color: #1fe266;
+color: white;
+border: none;
+padding: 12px;
+border-radius: 6px;
+font-size: 15px;
+font-weight: bold;
+cursor: pointer;
+transition: background 0.2s;
+}
+button:hover {
+background-color: #10ad4a;
+}
+/* ELEMENTOS DE LA LISTA */
+ul { list-style: none; padding: 0; }
+li {
+margin: 8px 0;
+padding: 10px;
+background-color: #eff6ff;
+border-left: 4px solid #1d4ed8;
+border-radius: 4px;
+}
+
+footer {
+    background-color: #172554 !important;
+    color: white !important;
+    text-align: center;
+    padding: 15px 0;
+    margin-top: 30px;
+    margin-bottom: 0; /* Asegura que no tenga espacio abajo */
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    box-sizing: border-box;
+}
+
+/* Estilo para los elementos <li> de la lista */
+ul li {
+    margin: 8px 0;
+    padding: 10px 15px;
+    background-color: #eff6ff;
+    border-left: 4px solid #1d4ed8;
+    border-radius: 4px;
+    
+    /* Permite alinear el texto a la izquierda y el botón a la derecha */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Estilo del botón Completar */
+.btn-completar {
+    background-color: #0284c7;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-completar:hover {
+    background-color: #0369a1;
+}
+
+/* Botón para cambiar de tema */
+.btn-theme {
+  background-color: #172554;
+  color: white;
+  border: 1px solid #60a5fa;
+  padding: 8px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-theme:hover {
+  background-color: #1d4ed8;
+}
+
+/* ==========================================
+   ESTILOS PARA EL MODO OSCURO
+   ========================================== */
+body.dark-mode {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+body.dark-mode section {
+  background-color: #1e293b;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode h2 {
+  color: #60a5fa;
+}
+
+body.dark-mode input[type="text"] {
+  background-color: #334155;
+  color: #ffffff;
+  border: 1px solid #475569;
+}
+
+body.dark-mode ul li {
+  background-color: #1e293b;
+  border-left-color: #60a5fa;
+  color: #f1f5f9;
+}
+
+body.dark-mode .btn-theme {
+  background-color: #facc15;
+  color: #0f172a;
+  border: none;
+}
+
+/* Layout del encabezado de la lista de tareas */
+.header-tareas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* Badge del Contador */
+.badge-contador {
+  background-color: #1d4ed8;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* Estilo para la fecha dentro del <li> */
+.fecha-tarea {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+body.dark-mode .fecha-tarea {
+  color: #94a3b8;
+}
+
+/* Botón de Eliminar Todo */
+.btn-danger {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 15px;
+  transition: background 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+/* Input de fecha */
+input[type="date"] {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+body.dark-mode input[type="date"] {
+  background-color: #334155;
+  color: #ffffff;
+  border: 1px solid #475569;
+}
+
+

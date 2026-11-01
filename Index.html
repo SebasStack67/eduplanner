@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduPlanner - Grado 10°</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+<header>
+  <h1>EduPlanner</h1>
+  <p>Organiza tus tareas y alcanza tus metas académicas.</p>
+  <button id="btnModoOscuro" class="btn-theme">🌙 Modo Oscuro</button>
+</header>
+</header>
+<nav>
+<a href="#inicio">Inicio</a>
+<a href="#registrar">Registrar Tarea</a>
+<a href="#pendientes">Mis Tareas</a>
+</nav>
+<main>
+<main>
+    <!-- SECCIÓN DE INICIO -->
+    <section id="inicio">
+        <h2>¡Bienvenido a EduPlanner!</h2>
+        <p>Tu espacio digital para organizar tus actividades escolares.</p>
+    </section>
+
+    <!-- SECCIÓN DE REGISTRO (Tarea + Fecha) -->
+    <section id="registrar">
+        <h2>Registrar una Tarea</h2>
+        <form id="taskForm">
+            <label for="tareaInput">Nombre de la tarea:</label>
+            <input type="text" id="tareaInput" placeholder="Ejemplo: Taller de física" required>
+            
+            <label for="fechaInput">Fecha de entrega:</label>
+            <input type="date" id="fechaInput">
+
+            <button type="submit" class="btn-add">+ Agregar Tarea</button>
+        </form>
+    </section>
+
+    <!-- SECCIÓN DE TAREAS PENDIENTES (Con Contador y Botón Borrar Todo) -->
+    <section id="pendientes">
+        <div class="header-tareas">
+            <h2>Mis Tareas Pendientes</h2>
+            <span id="contadorTareas" class="badge-contador">0 tareas</span>
+        </div>
+
+        <ul id="listaTareas">
+            <li id="mensajeInicial">Aquí aparecerán tus tareas guardadas.</li>
+        </ul>
+
+        <button id="btnEliminarTodo" class="btn-danger" style="display: none;">🗑️ Eliminar todas las tareas</button>
+    </section>
+</main>
+
+    <footer>
+        <p>EduPlanner Grado 10° | Organiza, aprende y progresa.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
