@@ -1,5 +1,5 @@
 // ==========================================
-// 1. IMPORTACIONES DE FIREBASE (Arriba del todo)
+// 1. IMPORTACIONES DE FIREBASE (Versión 10.8.0 estable)
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
@@ -17,7 +17,8 @@ import {
   doc,
   query, 
   where, 
-  onSnapshot 
+  onSnapshot,
+  getDocs 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ==========================================
@@ -38,7 +39,6 @@ const db = getFirestore(app);
 
 console.log("EduPlanner: JavaScript y Firebase conectados correctamente.");
 
-// Variable global para identificar al usuario actual en la nube
 let usuarioActualUid = null;
 
 // ==========================================
@@ -106,7 +106,6 @@ function actualizarContador(totalTareas) {
 function renderizarTareasEnPantalla(tareas) {
     if (!listaTareas) return;
     
-    // Limpiamos los elementos anteriores (excepto el mensaje inicial)
     const elementosLi = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
     elementosLi.forEach(li => li.remove());
 
@@ -130,7 +129,6 @@ function renderizarTareasEnPantalla(tareas) {
         botonCompletar.textContent = "✓ Completar";
         botonCompletar.className = "btn-completar";
 
-        // Al hacer clic, borra la tarea directamente de Firestore en la nube
         botonCompletar.addEventListener("click", async function() {
             try {
                 await deleteDoc(doc(db, "tasks", item.id));
@@ -214,7 +212,28 @@ if (formulario) {
 }
 
 // ==========================================
-// 8. CONTROL DE AUTENTICACIÓN Y SESIÓN
+// 8. BOTÓN ELIMINAR TODO
+// ==========================================
+if (btnEliminarTodo) {
+    btnEliminarTodo.addEventListener("click", async () => {
+        if (!usuarioActualUid) return;
+        if (confirm("¿Estás seguro de que deseas borrar TODAS tus tareas de la nube?")) {
+            try {
+                const q = query(collection(db, "tasks"), where("userId", "==", usuarioActualUid));
+                const querySnapshot = await getDocs(q);
+                const deletePromises = querySnapshot.docs.map(documentSnapshot => 
+                    deleteDoc(doc(db, "tasks", documentSnapshot.id))
+                );
+                await Promise.all(deletePromises);
+            } catch (error) {
+                console.error("Error al eliminar todas las tareas:", error);
+            }
+        }
+    });
+}
+
+// ==========================================
+// 9. CONTROL DE AUTENTICACIÓN Y SESIÓN
 // ==========================================
 if (openAuthBtn && authModal) {
     openAuthBtn.addEventListener("click", () => { authModal.style.display = "flex"; });
@@ -258,7 +277,6 @@ if (logoutBtn) {
     });
 }
 
-// Observador de estado: aquí arranca la magia de sincronizar en tiempo real
 onAuthStateChanged(auth, (user) => {
     if (user) {
         usuarioActualUid = user.uid;
@@ -266,7 +284,6 @@ onAuthStateChanged(auth, (user) => {
         if (userInfo) userInfo.style.display = "flex";
         if (userEmailSpan) userEmailSpan.textContent = user.email;
 
-        // Escucha y carga las tareas del usuario logueado en la nube
         escucharTareasFirestore(user.uid);
     } else {
         usuarioActualUid = null;
