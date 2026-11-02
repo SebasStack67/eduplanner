@@ -11,13 +11,16 @@ const firebaseConfig = {
 };
 
 // Inicializar Firebase clásico
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 console.log("EduPlanner: Versión clásica de Firebase conectada correctamente.");
 
 let usuarioActualUid = null;
+let unsubscribeFirestore = null; // Para detener la escucha de Firestore al cerrar sesión
 
 // ==========================================
 // 2. SELECCIÓN DE ELEMENTOS DEL DOM
@@ -108,10 +111,19 @@ function renderizarTareasEnPantalla(tareas) {
         botonCompletar.className = "btn-completar";
 
         botonCompletar.addEventListener("click", async function() {
-            try {
-                await db.collection("tasks").doc(item.id).delete();
-            } catch (error) {
-                console.error("Error al eliminar la tarea de la nube:", error);
+            if (usuarioActualUid) {
+                // Eliminar de Firestore si hay sesión
+                try {
+                    await db.collection("tasks").doc(item.id).delete();
+                } catch (error) {
+                    console.error("Error al eliminar la tarea de la nube:", error);
+                }
+            } else {
+                // Eliminar de LocalStorage si NO hay sesión
+                let tareasLocales = JSON.parse(localStorage.getItem("eduplanner_tareas_locales")) || [];
+                tareasLocales = tareasLocales.filter(t => t.id !== item.id);
+                localStorage.setItem("eduplanner_tareas_locales", JSON.stringify(tareasLocales));
+                cargarTareasLocalStorage();
             }
         });
 
@@ -124,10 +136,10 @@ function renderizarTareasEnPantalla(tareas) {
 }
 
 // ==========================================
-// 5. CONEXIÓN CON FIRESTORE (NUBE)
+// 5. CONEXIÓN CON FIRESTORE Y LOCALSTORAGE
 // ==========================================
 function escucharTareasFirestore(userId) {
-    db.collection("tasks")
+    unsubscribeFirestore = db.collection("tasks")
       .where("userId", "==", userId)
       .onSnapshot((snapshot) => {
         const tareas = [];
@@ -138,23 +150,37 @@ function escucharTareasFirestore(userId) {
     });
 }
 
-async function agregarTareaFirestore(titulo, fecha) {
-    if (!usuarioActualUid) {
-        alert("Debes iniciar sesión para guardar tareas en la nube.");
-        if (authModal) authModal.style.display = "flex";
-        return;
-    }
+function cargarTareasLocalStorage() {
+    const tareasLocales = JSON.parse(localStorage.getItem("eduplanner_tareas_locales")) || [];
+    renderizarTareasEnPantalla(tareasLocales);
+}
 
-    try {
-        await db.collection("tasks").add({
+async function agregarTarea(titulo, fecha) {
+    if (usuarioActualUid) {
+        // Guardar en la nube (Firestore)
+        try {
+            await db.collection("tasks").add({
+                title: titulo,
+                fecha: fecha || "",
+                userId: usuarioActualUid,
+                completed: false,
+                createdAt: new Date()
+            });
+        } catch (error) {
+            console.error("Error al guardar la tarea en la nube:", error);
+        }
+    } else {
+        // Guardar de forma local en la computadora (LocalStorage)
+        const tareasLocales = JSON.parse(localStorage.getItem("eduplanner_tareas_locales")) || [];
+        const nuevaTareaLocal = {
+            id: "local_" + Date.now() + Math.random(),
             title: titulo,
             fecha: fecha || "",
-            userId: usuarioActualUid,
-            completed: false,
-            createdAt: new Date()
-        });
-    } catch (error) {
-        console.error("Error al guardar la tarea:", error);
+            completed: false
+        };
+        tareasLocales.push(nuevaTareaLocal);
+        localStorage.setItem("eduplanner_tareas_locales", JSON.stringify(tareasLocales));
+        cargarTareasLocalStorage();
     }
 }
 
@@ -179,7 +205,7 @@ if (formulario) {
         tareasArray.forEach(function(tareaTexto) {
             const textoLimpio = tareaTexto.trim();
             if (textoLimpio !== "") {
-                agregarTareaFirestore(textoLimpio, fechaIngresada);
+                agregarTarea(textoLimpio, fechaIngresada);
             }
         });
 
@@ -194,16 +220,22 @@ if (formulario) {
 // ==========================================
 if (btnEliminarTodo) {
     btnEliminarTodo.addEventListener("click", async () => {
-        if (!usuarioActualUid) return;
-        if (confirm("¿Estás seguro de que deseas borrar TODAS tus tareas de la nube?")) {
-            try {
-                const querySnapshot = await db.collection("tasks").where("userId", "==", usuarioActualUid).get();
-                const deletePromises = querySnapshot.docs.map(documentSnapshot => 
-                    documentSnapshot.ref.delete()
-                );
-                await Promise.all(deletePromises);
-            } catch (error) {
-                console.error("Error al eliminar todas las tareas:", error);
+        if (usuarioActualUid) {
+            if (confirm("¿Estás seguro de que deseas borrar TODAS tus tareas de la nube?")) {
+                try {
+                    const querySnapshot = await db.collection("tasks").where("userId", "==", usuarioActualUid).get();
+                    const deletePromises = querySnapshot.docs.map(documentSnapshot => 
+                        documentSnapshot.ref.delete()
+                    );
+                    await Promise.all(deletePromises);
+                } catch (error) {
+                    console.error("Error al eliminar todas las tareas:", error);
+                }
+            }
+        } else {
+            if (confirm("¿Estás seguro de que deseas borrar todas tus tareas locales?")) {
+                localStorage.removeItem("eduplanner_tareas_locales");
+                cargarTareasLocalStorage();
             }
         }
     });
@@ -256,16 +288,27 @@ if (logoutBtn) {
 
 auth.onAuthStateChanged((user) => {
     if (user) {
+        // Si había escucha previa de Firestore, la detenemos
+        if (typeof unsubscribeFirestore === 'function') {
+            unsubscribeFirestore();
+        }
+
         usuarioActualUid = user.uid;
         if (openAuthBtn) openAuthBtn.style.display = "none";
         if (userInfo) userInfo.style.display = "flex";
         if (userEmailSpan) userEmailSpan.textContent = user.email;
 
         escucharTareasFirestore(user.uid);
-    } else {s
+    } else {
+        // Si se cierra sesión, detenemos Firestore y cargamos lo local
+        if (typeof unsubscribeFirestore === 'function') {
+            unsubscribeFirestore();
+        }
+
         usuarioActualUid = null;
         if (openAuthBtn) openAuthBtn.style.display = "block";
         if (userInfo) userInfo.style.display = "none";
-        renderizarTareasEnPantalla([]);
+        
+        cargarTareasLocalStorage();
     }
 });
