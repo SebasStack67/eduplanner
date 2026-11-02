@@ -1,28 +1,3 @@
-// 1. Las importaciones de Firebase van obligatoriamente arriba del todo
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-
-// 2. La configuración y la inicialización
-const firebaseConfig = {
-  apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
-  authDomain: "eduplanner-9d2ec.firebaseapp.com",
-  projectId: "eduplanner-9d2ec",
-  storageBucket: "eduplanner-9d2ec.firebasestorage.app",
-  messagingSenderId: "145593910568",
-  appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// 3. A partir de aquí hacia abajo puedes colocar el resto de tu código 
-// (como tus funciones de tareas, el modo oscuro, etc.)
 
 console.log("EduPlanner: JavaScript conectado correctamente.");
 
@@ -179,13 +154,5 @@ if (btnEliminarTodo) {
             tareas.forEach(li => li.remove());
             guardarTareasEnLocalStorage();
         }
-    });
-}
-
-// 2. Botón de Agregar Tareas (Cambia "btn-agregar-tarea" por el ID de tu botón)
-const btnAgregarTarea = document.getElementById("btn-agregar-tarea");
-if (btnAgregarTarea) {
-    btnAgregarTarea.addEventListener("click", () => {
-        console.log("Botón de tarea presionado");
     });
 }
