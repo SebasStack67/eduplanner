@@ -181,3 +181,11 @@ if (btnEliminarTodo) {
         }
     });
 }
+
+// 2. Botón de Agregar Tareas (Cambia "btn-agregar-tarea" por el ID de tu botón)
+const btnAgregarTarea = document.getElementById("btn-agregar-tarea");
+if (btnAgregarTarea) {
+    btnAgregarTarea.addEventListener("click", () => {
+        console.log("Botón de tarea presionado");
+    });
+}
