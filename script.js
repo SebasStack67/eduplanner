@@ -1,29 +1,14 @@
-// ==========================================
-// 1. IMPORTACIONES DE FIREBASE (Versión 10.8.0 estable)
-// ==========================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+// 1. Las importaciones de Firebase van obligatoriamente arriba del todo
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { 
   getAuth, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  deleteDoc,
-  doc,
-  query, 
-  where, 
-  onSnapshot,
-  getDocs 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 
-// ==========================================
-// 2. CONFIGURACIÓN E INICIALIZACIÓN
-// ==========================================
+// 2. La configuración y la inicialización
 const firebaseConfig = {
   apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
   authDomain: "eduplanner-9d2ec.firebaseapp.com",
@@ -35,15 +20,13 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-console.log("EduPlanner: JavaScript y Firebase conectados correctamente.");
+// 3. A partir de aquí hacia abajo puedes colocar el resto de tu código 
+// (como tus funciones de tareas, el modo oscuro, etc.)
 
-let usuarioActualUid = null;
+console.log("EduPlanner: JavaScript conectado correctamente.");
 
-// ==========================================
-// 3. SELECCIÓN DE ELEMENTOS DEL DOM
-// ==========================================
+// Selección de elementos del DOM
 const formulario = document.getElementById("taskForm");
 const inputTarea = document.getElementById("tareaInput");
 const inputFecha = document.getElementById("fechaInput");
@@ -53,21 +36,7 @@ const contadorTareas = document.getElementById("contadorTareas");
 const btnEliminarTodo = document.getElementById("btnEliminarTodo");
 const btnModoOscuro = document.getElementById("btnModoOscuro");
 
-// Elementos de Autenticación
-const openAuthBtn = document.getElementById("open-auth-btn");
-const authModal = document.getElementById("auth-modal");
-const closeAuthBtn = document.getElementById("close-auth-btn");
-const loginBtn = document.getElementById("login-btn");
-const registerBtn = document.getElementById("register-btn");
-const authEmail = document.getElementById("auth-email");
-const authPassword = document.getElementById("auth-password");
-const userInfo = document.getElementById("user-info");
-const userEmailSpan = document.getElementById("user-email");
-const logoutBtn = document.getElementById("logout-btn");
-
-// ==========================================
-// 4. MODO OSCURO
-// ==========================================
+// --- 1. MODO OSCURO ---
 if (localStorage.getItem("modoOscuro") === "activado") {
     document.body.classList.add("dark-mode");
     if (btnModoOscuro) btnModoOscuro.textContent = "☀️ Modo Claro";
@@ -86,15 +55,18 @@ if (btnModoOscuro) {
     });
 }
 
-// ==========================================
-// 5. FUNCIONES DE TAREAS Y CONTADOR
-// ==========================================
-function actualizarContador(totalTareas) {
+// --- 2. FUNCIONES DE CONTADOR Y ALMACENAMIENTO ---
+
+// Actualizar el número de tareas en pantalla y visibilidad de controles
+function actualizarContador() {
+    const tareas = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
+    const total = tareas.length;
+    
     if (contadorTareas) {
-        contadorTareas.textContent = totalTareas === 1 ? "1 tarea" : `${totalTareas} tareas`;
+        contadorTareas.textContent = total === 1 ? "1 tarea" : `${total} tareas`;
     }
 
-    if (totalTareas === 0) {
+    if (total === 0) {
         if (mensajeInicial) mensajeInicial.style.display = "block";
         if (btnEliminarTodo) btnEliminarTodo.style.display = "none";
     } else {
@@ -103,192 +75,134 @@ function actualizarContador(totalTareas) {
     }
 }
 
-function renderizarTareasEnPantalla(tareas) {
-    if (!listaTareas) return;
+// Guardar tareas en localStorage (Guarda objeto con texto y fecha)
+function guardarTareasEnLocalStorage() {
+    const lis = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
+    const tareas = [];
     
-    const elementosLi = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
-    elementosLi.forEach(li => li.remove());
-
-    tareas.forEach(item => {
-        const nuevaLi = document.createElement("li");
-        const infoDiv = document.createElement("div");
-        
-        const textoSpan = document.createElement("span");
-        textoSpan.className = "texto-tarea";
-        textoSpan.textContent = item.title;
-        infoDiv.appendChild(textoSpan);
-
-        if (item.fecha) {
-            const fechaSpan = document.createElement("span");
-            fechaSpan.className = "fecha-tarea";
-            fechaSpan.textContent = item.fecha.startsWith("📅") ? item.fecha : `📅 ${item.fecha}`;
-            infoDiv.appendChild(fechaSpan);
-        }
-
-        const botonCompletar = document.createElement("button");
-        botonCompletar.textContent = "✓ Completar";
-        botonCompletar.className = "btn-completar";
-
-        botonCompletar.addEventListener("click", async function() {
-            try {
-                await deleteDoc(doc(db, "tasks", item.id));
-            } catch (error) {
-                console.error("Error al eliminar la tarea de la nube:", error);
-            }
-        });
-
-        nuevaLi.appendChild(infoDiv);
-        nuevaLi.appendChild(botonCompletar);
-        listaTareas.appendChild(nuevaLi);
+    lis.forEach(li => {
+        const texto = li.querySelector(".texto-tarea").textContent;
+        const fecha = li.querySelector(".fecha-tarea") ? li.querySelector(".fecha-tarea").textContent : "";
+        tareas.push({ texto, fecha });
     });
-
-    actualizarContador(tareas.length);
+    
+    localStorage.setItem("misTareasEduPlanner", JSON.stringify(tareas));
+    actualizarContador();
 }
 
-// ==========================================
-// 6. CONEXIÓN CON FIRESTORE (NUBE)
-// ==========================================
-function escucharTareasFirestore(userId) {
-    const q = query(collection(db, "tasks"), where("userId", "==", userId));
+// Cargar tareas al abrir la página
+function cargarTareas() {
+    const tareasGuardadas = JSON.parse(localStorage.getItem("misTareasEduPlanner")) || [];
     
-    onSnapshot(q, (snapshot) => {
-        const tareas = [];
-        snapshot.forEach((docSnap) => {
-            tareas.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        renderizarTareasEnPantalla(tareas);
+    tareasGuardadas.forEach(item => {
+        crearElementoEnDOM(item.texto, item.fecha);
     });
+    
+    actualizarContador();
 }
 
-async function agregarTareaFirestore(titulo, fecha) {
-    if (!usuarioActualUid) {
-        alert("Debes iniciar sesión para guardar tareas en la nube.");
-        if (authModal) authModal.style.display = "flex";
+// Función auxiliar para construir el <li> en el DOM
+function crearElementoEnDOM(texto, fecha) {
+    if (mensajeInicial) mensajeInicial.style.display = "none";
+
+    const nuevaLi = document.createElement("li");
+    
+    // Contenedor de información (Texto + Fecha)
+    const infoDiv = document.createElement("div");
+    
+    const textoSpan = document.createElement("span");
+    textoSpan.className = "texto-tarea";
+    textoSpan.textContent = texto;
+    infoDiv.appendChild(textoSpan);
+
+    if (fecha) {
+        const fechaSpan = document.createElement("span");
+        fechaSpan.className = "fecha-tarea";
+        fechaSpan.textContent = fecha.startsWith("📅") ? fecha : `📅 ${fecha}`;
+        infoDiv.appendChild(fechaSpan);
+    }
+
+    // Botón de completar
+    const botonCompletar = document.createElement("button");
+    botonCompletar.textContent = "✓ Completar";
+    botonCompletar.className = "btn-completar";
+
+    botonCompletar.addEventListener("click", function() {
+        nuevaLi.remove();
+        guardarTareasEnLocalStorage();
+    });
+
+    nuevaLi.appendChild(infoDiv);
+    nuevaLi.appendChild(botonCompletar);
+    listaTareas.appendChild(nuevaLi);
+}
+
+// Cargar tareas iniciales
+cargarTareas();
+
+// --- 3. EVENTO SUBMIT (AGREGAR TAREAS) ---
+formulario.addEventListener("submit", function(evento) {
+    evento.preventDefault();
+
+    const textoIngresado = inputTarea.value.trim();
+    const fechaIngresada = inputFecha.value;
+
+    if (textoIngresado === "") {
+        alert("¡Atención! Debes escribir el nombre de una tarea.");
+        inputTarea.focus();
         return;
     }
 
-    try {
-        await addDoc(collection(db, "tasks"), {
-            title: titulo,
-            fecha: fecha || "",
-            userId: usuarioActualUid,
-            completed: false,
-            createdAt: new Date()
-        });
-    } catch (error) {
-        console.error("Error al guardar la tarea:", error);
-    }
-}
+    // Separación por comas
+    const tareasArray = textoIngresado.split(",");
 
-// ==========================================
-// 7. EVENTO SUBMIT (AGREGAR TAREAS)
-// ==========================================
-if (formulario) {
-    formulario.addEventListener("submit", function(evento) {
-        evento.preventDefault();
-
-        const textoIngresado = inputTarea.value.trim();
-        const fechaIngresada = inputFecha.value;
-
-        if (textoIngresado === "") {
-            alert("¡Atención! Debes escribir el nombre de una tarea.");
-            inputTarea.focus();
-            return;
-        }
-
-        const tareasArray = textoIngresado.split(",");
-
-        tareasArray.forEach(function(tareaTexto) {
-            const textoLimpio = tareaTexto.trim();
-            if (textoLimpio !== "") {
-                agregarTareaFirestore(textoLimpio, fechaIngresada);
-            }
-        });
-
-        inputTarea.value = "";
-        inputFecha.value = "";
-        inputTarea.focus();
-    });
-}
-
-// ==========================================
-// 8. BOTÓN ELIMINAR TODO
-// ==========================================
-if (btnEliminarTodo) {
-    btnEliminarTodo.addEventListener("click", async () => {
-        if (!usuarioActualUid) return;
-        if (confirm("¿Estás seguro de que deseas borrar TODAS tus tareas de la nube?")) {
-            try {
-                const q = query(collection(db, "tasks"), where("userId", "==", usuarioActualUid));
-                const querySnapshot = await getDocs(q);
-                const deletePromises = querySnapshot.docs.map(documentSnapshot => 
-                    deleteDoc(doc(db, "tasks", documentSnapshot.id))
-                );
-                await Promise.all(deletePromises);
-            } catch (error) {
-                console.error("Error al eliminar todas las tareas:", error);
-            }
+    tareasArray.forEach(function(tareaTexto) {
+        const textoLimpio = tareaTexto.trim();
+        if (textoLimpio !== "") {
+            crearElementoEnDOM(textoLimpio, fechaIngresada);
         }
     });
-}
 
-// ==========================================
-// 9. CONTROL DE AUTENTICACIÓN Y SESIÓN
-// ==========================================
-if (openAuthBtn && authModal) {
-    openAuthBtn.addEventListener("click", () => { authModal.style.display = "flex"; });
-}
-if (closeAuthBtn && authModal) {
-    closeAuthBtn.addEventListener("click", () => { authModal.style.display = "none"; });
-}
+    guardarTareasEnLocalStorage();
 
-if (registerBtn && authEmail && authPassword) {
-    registerBtn.addEventListener("click", async () => {
-        const email = authEmail.value;
-        const password = authPassword.value;
-        try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            alert("¡Cuenta creada con éxito!");
-            if (authModal) authModal.style.display = "none";
-        } catch (error) {
-            alert("Error al registrarse: " + error.message);
-        }
-    });
-}
-
-if (loginBtn && authEmail && authPassword) {
-    loginBtn.addEventListener("click", async () => {
-        const email = authEmail.value;
-        const password = authPassword.value;
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            alert("¡Sesión iniciada correctamente!");
-            if (authModal) authModal.style.display = "none";
-        } catch (error) {
-            alert("Error al iniciar sesión: " + error.message);
-        }
-    });
-}
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-        await signOut(auth);
-        alert("Sesión cerrada.");
-    });
-}
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        usuarioActualUid = user.uid;
-        if (openAuthBtn) openAuthBtn.style.display = "none";
-        if (userInfo) userInfo.style.display = "flex";
-        if (userEmailSpan) userEmailSpan.textContent = user.email;
-
-        escucharTareasFirestore(user.uid);
-    } else {
-        usuarioActualUid = null;
-        if (openAuthBtn) openAuthBtn.style.display = "block";
-        if (userInfo) userInfo.style.display = "none";
-        renderizarTareasEnPantalla([]);
-    }
+    // Limpiar campos del formulario
+    inputTarea.value = "";
+    inputFecha.value = "";
+    inputTarea.focus();
 });
+
+// --- 4. BOTÓN ELIMINAR TODO ---
+if (btnEliminarTodo) {
+    btnEliminarTodo.addEventListener("click", function() {
+        if (confirm("¿Estás seguro de que deseas borrar TODAS las tareas pendientes?")) {
+            const tareas = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
+            tareas.forEach(li => li.remove());
+            guardarTareasEnLocalStorage();
+        }
+    });
+}
+
+// --- CONEXIÓN DE BOTONES CON ADDEXTENLISTENER ---
+document.addEventListener("DOMContentLoaded", () => {
+  
+  // 1. Botón de Modo Oscuro (Cambia "btn-modo-oscuro" por el ID de tu botón en el HTML)
+  const btnModoOscuro = document.getElementById("btn-modo-oscuro");
+  if (btnModoOscuro) {
+    btnModoOscuro.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+  }
+
+  // 2. Botón de Agregar Tareas (Cambia "btn-agregar-tarea" por el ID de tu botón)
+  const btnAgregarTarea = document.getElementById("btn-agregar-tarea");
+  if (btnAgregarTarea) {
+    btnAgregarTarea.addEventListener("click", () => {
+      // Llama aquí a tu función original que agrega tareas o pon la lógica directamente
+      console.log("Botón de tarea presionado");
+    });
+  }
+
+});
+
+//git add . ; git commit -m "Conecta botones mediante addEventListener" ; git push
+
