@@ -1,5 +1,4 @@
 // 1. Las importaciones de Firebase van obligatoriamente arriba del todo
-import { collection, addDoc, query, where, onSnapshot } from "firebase/firestore";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { 
   getAuth, 
@@ -28,53 +27,6 @@ const auth = getAuth(app);
 // ==========================================
 // 2. EN EL MEDIO: Lógica del Modal y Botones
 // ==========================================
-// Función para guardar una nueva tarea en Firestore vinculada a tu usuario
-// Cuando el usuario inicia sesión correctamente:
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    const userId = user.uid;
-    
-    // Activamos la sincronización en tiempo real
-    escucharTareasFirestore(userId, (tareasEnLaNube) => {
-      // AQUÍ LLAMAS A TU FUNCIÓN QUE PINTA LAS TAREAS EN TU HTML
-      renderizarTareasEnPantalla(tareasEnLaNube); 
-    });
-
-  } else {
-    // Si cierra sesión, limpiamos la pantalla
-    renderizarTareasEnPantalla([]); 
-  }
-});
-async function agregarTareaFirestore(titulo, userId) {
-  try {
-    await addDoc(collection(db, "tasks"), {
-      title: titulo,
-      userId: userId, // Vincula la tarea a tu cuenta
-      completed: false,
-      createdAt: new Date()
-    });
-    console.log("Tarea guardada en la nube.");
-  } catch (error) {
-    console.error("Error al guardar la tarea:", error);
-  }
-}
-
-// Función para escuchar las tareas en tiempo real entre tus dos laptops
-function escucharTareasFirestore(userId, callbackRender) {
-  const q = query(collection(db, "tasks"), where("userId", "==", userId));
-  
-  onSnapshot(q, (snapshot) => {
-    const tareas = [];
-    snapshot.forEach((doc) => {
-      tareas.push({ id: doc.id, ...doc.data() });
-    });
-    
-    // Esto actualiza tu pantalla automáticamente
-    if (typeof callbackRender === "function") {
-      callbackRender(tareas);
-    }
-  });
-}
 const modal = document.getElementById("auth-modal");
 const btnAbrirModal = document.getElementById("open-auth-btn");
 const btnCerrarModal = document.getElementById("close-auth-btn");
