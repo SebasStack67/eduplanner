@@ -204,3 +204,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+//git add . ; git commit -m "Conecta botones mediante addEventListener" ; git push//
+
