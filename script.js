@@ -182,3 +182,25 @@ if (btnEliminarTodo) {
     });
 }
 
+// --- CONEXIÓN DE BOTONES CON ADDEXTENLISTENER ---
+document.addEventListener("DOMContentLoaded", () => {
+  
+  // 1. Botón de Modo Oscuro (Cambia "btn-modo-oscuro" por el ID de tu botón en el HTML)
+  const btnModoOscuro = document.getElementById("btn-modo-oscuro");
+  if (btnModoOscuro) {
+    btnModoOscuro.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+  }
+
+  // 2. Botón de Agregar Tareas (Cambia "btn-agregar-tarea" por el ID de tu botón)
+  const btnAgregarTarea = document.getElementById("btn-agregar-tarea");
+  if (btnAgregarTarea) {
+    btnAgregarTarea.addEventListener("click", () => {
+      // Llama aquí a tu función original que agrega tareas o pon la lógica directamente
+      console.log("Botón de tarea presionado");
+    });
+  }
+
+});
+
