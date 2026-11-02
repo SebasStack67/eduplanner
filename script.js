@@ -156,12 +156,17 @@ if (btnEliminarTodo) {
     });
 }
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// 1. Importa Firebase y Auth usando la misma versión (13.1.0)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 
-// Your web app's Firebase configuration
+// 2. Tus credenciales reales de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
   authDomain: "eduplanner-9d2ec.firebaseapp.com",
@@ -171,18 +176,11 @@ const firebaseConfig = {
   appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
 };
 
-// Initialize Firebase
+// 3. Inicializar Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { auth } from "./tu-archivo-donde-inicializas-firebase.js"; // Ajusta la ruta según corresponda
-
-// Referencias del DOM
+// 4. Referencias del DOM para el Login y Registro
 const emailInput = document.getElementById("auth-email");
 const passwordInput = document.getElementById("auth-password");
 const loginBtn = document.getElementById("login-btn");
@@ -192,42 +190,39 @@ const userInfo = document.getElementById("user-info");
 const authForms = document.getElementById("auth-forms");
 const userEmailSpan = document.getElementById("user-email");
 
-// Registrar nuevo usuario
+// 5. Registrar nuevo usuario
 registerBtn.addEventListener("click", async () => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+    await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     alert("¡Cuenta creada con éxito!");
   } catch (error) {
     alert("Error al registrar: " + error.message);
   }
 });
 
-// Iniciar sesión
+// 6. Iniciar sesión
 loginBtn.addEventListener("click", async () => {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
     alert("¡Bienvenido de nuevo!");
   } catch (error) {
     alert("Error al iniciar sesión: " + error.message);
   }
 });
 
-// Cerrar sesión
+// 7. Cerrar sesión
 logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
   alert("Has cerrado sesión.");
 });
 
-// Observar si el usuario está conectado o no
+// 8. Controlar la vista según la sesión
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // Usuario conectado
     userInfo.style.display = "block";
     authForms.style.display = "none";
     userEmailSpan.textContent = user.email;
-    // Aquí puedes cargar las tareas de Firestore correspondientes a este usuario (user.uid)
   } else {
-    // Usuario desconectado
     userInfo.style.display = "none";
     authForms.style.display = "block";
     userEmailSpan.textContent = "";
