@@ -24,58 +24,6 @@ const auth = getAuth(app);
 // 3. A partir de aquí hacia abajo puedes colocar el resto de tu código 
 // (como tus funciones de tareas, el modo oscuro, etc.)
 
-// ==========================================
-// 2. EN EL MEDIO: Lógica del Modal y Botones
-// ==========================================
-const modal = document.getElementById("auth-modal");
-const btnAbrirModal = document.getElementById("open-auth-btn");
-const btnCerrarModal = document.getElementById("close-auth-btn");
-const userInfoDiv = document.getElementById("user-info");
-const userEmailSpan = document.getElementById("user-email");
-const btnLogout = document.getElementById("logout-btn");
-
-const emailInput = document.getElementById("auth-email");   
-const passwordInput = document.getElementById("auth-password"); 
-const btnRegistrar = document.getElementById("register-btn");
-const btnLogin = document.getElementById("login-btn");
-
-if (btnAbrirModal) btnAbrirModal.addEventListener("click", () => modal.style.display = "flex");
-if (btnCerrarModal) btnCerrarModal.addEventListener("click", () => modal.style.display = "none");
-window.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
-
-if (btnRegistrar) {
-  btnRegistrar.addEventListener("click", () => {
-    createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .then(() => { alert("¡Registro exitoso!"); modal.style.display = "none"; })
-      .catch((err) => alert("Error: " + err.message));
-  });
-}
-
-if (btnLogin) {
-  btnLogin.addEventListener("click", () => {
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .then(() => { modal.style.display = "none"; })
-      .catch((err) => alert("Error: " + err.message));
-  });
-}
-
-if (btnLogout) {
-  btnLogout.addEventListener("click", () => {
-    signOut(auth).then(() => alert("Has cerrado sesión"));
-  });
-}
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    if (btnAbrirModal) btnAbrirModal.style.display = "none";
-    if (userInfoDiv) userInfoDiv.style.display = "flex";
-    if (userEmailSpan) userEmailSpan.textContent = user.email;
-  } else {
-    if (btnAbrirModal) btnAbrirModal.style.display = "block";
-    if (userInfoDiv) userInfoDiv.style.display = "none";
-  }
-});
-
 console.log("EduPlanner: JavaScript conectado correctamente.");
 
 // Selección de elementos del DOM
