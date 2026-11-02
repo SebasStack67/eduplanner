@@ -173,3 +173,63 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { auth } from "./tu-archivo-donde-inicializas-firebase.js"; // Ajusta la ruta según corresponda
+
+// Referencias del DOM
+const emailInput = document.getElementById("auth-email");
+const passwordInput = document.getElementById("auth-password");
+const loginBtn = document.getElementById("login-btn");
+const registerBtn = document.getElementById("register-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const userInfo = document.getElementById("user-info");
+const authForms = document.getElementById("auth-forms");
+const userEmailSpan = document.getElementById("user-email");
+
+// Registrar nuevo usuario
+registerBtn.addEventListener("click", async () => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+    alert("¡Cuenta creada con éxito!");
+  } catch (error) {
+    alert("Error al registrar: " + error.message);
+  }
+});
+
+// Iniciar sesión
+loginBtn.addEventListener("click", async () => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+    alert("¡Bienvenido de nuevo!");
+  } catch (error) {
+    alert("Error al iniciar sesión: " + error.message);
+  }
+});
+
+// Cerrar sesión
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+  alert("Has cerrado sesión.");
+});
+
+// Observar si el usuario está conectado o no
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // Usuario conectado
+    userInfo.style.display = "block";
+    authForms.style.display = "none";
+    userEmailSpan.textContent = user.email;
+    // Aquí puedes cargar las tareas de Firestore correspondientes a este usuario (user.uid)
+  } else {
+    // Usuario desconectado
+    userInfo.style.display = "none";
+    authForms.style.display = "block";
+    userEmailSpan.textContent = "";
+  }
+});
