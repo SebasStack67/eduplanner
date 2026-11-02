@@ -1,3 +1,80 @@
+// 1. Las importaciones de Firebase van obligatoriamente arriba del todo
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+
+// 2. La configuración y la inicialización
+const firebaseConfig = {
+  apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
+  authDomain: "eduplanner-9d2ec.firebaseapp.com",
+  projectId: "eduplanner-9d2ec",
+  storageBucket: "eduplanner-9d2ec.firebasestorage.app",
+  messagingSenderId: "145593910568",
+  appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// 3. A partir de aquí hacia abajo puedes colocar el resto de tu código 
+// (como tus funciones de tareas, el modo oscuro, etc.)
+
+// ==========================================
+// 2. EN EL MEDIO: Lógica del Modal y Botones
+// ==========================================
+const modal = document.getElementById("auth-modal");
+const btnAbrirModal = document.getElementById("open-auth-btn");
+const btnCerrarModal = document.getElementById("close-auth-btn");
+const userInfoDiv = document.getElementById("user-info");
+const userEmailSpan = document.getElementById("user-email");
+const btnLogout = document.getElementById("logout-btn");
+
+const emailInput = document.getElementById("auth-email");   
+const passwordInput = document.getElementById("auth-password"); 
+const btnRegistrar = document.getElementById("register-btn");
+const btnLogin = document.getElementById("login-btn");
+
+if (btnAbrirModal) btnAbrirModal.addEventListener("click", () => modal.style.display = "flex");
+if (btnCerrarModal) btnCerrarModal.addEventListener("click", () => modal.style.display = "none");
+window.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
+
+if (btnRegistrar) {
+  btnRegistrar.addEventListener("click", () => {
+    createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+      .then(() => { alert("¡Registro exitoso!"); modal.style.display = "none"; })
+      .catch((err) => alert("Error: " + err.message));
+  });
+}
+
+if (btnLogin) {
+  btnLogin.addEventListener("click", () => {
+    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
+      .then(() => { modal.style.display = "none"; })
+      .catch((err) => alert("Error: " + err.message));
+  });
+}
+
+if (btnLogout) {
+  btnLogout.addEventListener("click", () => {
+    signOut(auth).then(() => alert("Has cerrado sesión"));
+  });
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    if (btnAbrirModal) btnAbrirModal.style.display = "none";
+    if (userInfoDiv) userInfoDiv.style.display = "flex";
+    if (userEmailSpan) userEmailSpan.textContent = user.email;
+  } else {
+    if (btnAbrirModal) btnAbrirModal.style.display = "block";
+    if (userInfoDiv) userInfoDiv.style.display = "none";
+  }
+});
 
 console.log("EduPlanner: JavaScript conectado correctamente.");
 
@@ -156,3 +233,27 @@ if (btnEliminarTodo) {
         }
     });
 }
+
+// --- CONEXIÓN DE BOTONES CON ADDEXTENLISTENER ---
+document.addEventListener("DOMContentLoaded", () => {
+  
+  // 1. Botón de Modo Oscuro (Cambia "btn-modo-oscuro" por el ID de tu botón en el HTML)
+  const btnModoOscuro = document.getElementById("btn-modo-oscuro");
+  if (btnModoOscuro) {
+    btnModoOscuro.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+  }
+
+  // 2. Botón de Agregar Tareas (Cambia "btn-agregar-tarea" por el ID de tu botón)
+  const btnAgregarTarea = document.getElementById("btn-agregar-tarea");
+  if (btnAgregarTarea) {
+    btnAgregarTarea.addEventListener("click", () => {
+      // Llama aquí a tu función original que agrega tareas o pon la lógica directamente
+      console.log("Botón de tarea presionado");
+    });
+  }
+
+});
+
+//git add . ; git commit -m "Conecta botones mediante addEventListener" ; git push

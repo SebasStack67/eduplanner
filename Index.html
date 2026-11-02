@@ -13,6 +13,38 @@
   <p>Organiza tus tareas y alcanza tus metas académicas.</p>
   <button id="btnModoOscuro" class="btn-theme">🌙 Modo Oscuro</button>
 
+ <div id="auth-corner">
+  <!-- Botón de Iniciar sesión (Visible cuando NO hay sesión) -->
+  <button id="open-auth-btn">
+    Iniciar sesión
+  </button>
+
+  <!-- Contenedor del usuario (Visible solo cuando SÍ hay sesión) -->
+  <div id="user-info">
+    <span id="user-email"></span>
+    <button id="logout-btn">
+      Cerrar sesión
+    </button>
+  </div>
+</div>
+
+<!-- Ventana Flotante (Modal) con los inputs de correo y contraseña -->
+<div id="auth-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-content">
+    <span id="close-auth-btn" class="close-btn">&times;</span>
+    <h3 style="margin-top: 0;">Cuenta de EduPlanner</h3>
+    
+    <div id="auth-forms" style="display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
+      <input type="email" id="auth-email" placeholder="Correo electrónico" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px;" />
+      <input type="password" id="auth-password" placeholder="Contraseña" style="padding: 10px; border: 1px solid #ccc; border-radius: 6px;" />
+      
+      <div style="display: flex; gap: 10px; margin-top: 5px;">
+        <button id="login-btn" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Iniciar sesión</button>
+        <button id="register-btn" style="flex: 1; padding: 10px; background: #17a2b8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">Registrarse</button>
+      </div>
+    </div>
+  </div>
+</div>
 </header>
 </header>
 <nav>
@@ -61,6 +93,6 @@
         <p>EduPlanner Grado 10° | Organiza, aprende y progresa.</p>
     </footer>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
