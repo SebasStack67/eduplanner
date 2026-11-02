@@ -155,3 +155,21 @@ if (btnEliminarTodo) {
         }
     });
 }
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
+  authDomain: "eduplanner-9d2ec.firebaseapp.com",
+  projectId: "eduplanner-9d2ec",
+  storageBucket: "eduplanner-9d2ec.firebasestorage.app",
+  messagingSenderId: "145593910568",
+  appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
