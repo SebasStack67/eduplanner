@@ -7,43 +7,7 @@ import {
   signOut, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-// 1. IMPORTACIONES DE FIREBASE (Deben ir obligatoriamente arriba del todo)
-import { collection, addDoc, query, where, onSnapshot } from "firebase/firestore";
-// (Asegúrate de conservar aquí tus otros imports de Firebase Auth, como getAuth, onAuthStateChanged, etc.)
 
-// 2. FUNCIÓN PARA AGREGAR TAREAS A LA NUBE (Firestore)
-export async function agregarTareaFirestore(titulo, userId) {
-  try {
-    await addDoc(collection(db, "tasks"), {
-      title: titulo,
-      userId: userId, // Vincula la tarea estrictamente a tu cuenta
-      completed: false,
-      createdAt: new Date()
-    });
-    console.log("Tarea guardada en la nube correctamente.");
-  } catch (error) {
-    console.error("Error al guardar la tarea en la nube:", error);
-  }
-}
-
-// 3. FUNCIÓN PARA SINCRONIZAR Y ESCUCHAR TAREAS EN TIEMPO REAL
-export function escucharTareasFirestore(userId, callbackRender) {
-  // Creamos una consulta que filtre solo las tareas del usuario actual
-  const q = query(collection(db, "tasks"), where("userId", "==", userId));
-  
-  // onSnapshot escucha cambios al instante (si agregas una tarea en la laptop A, la laptop B la recibe de inmediato)
-  onSnapshot(q, (snapshot) => {
-    const tareas = [];
-    snapshot.forEach((doc) => {
-      tareas.push({ id: doc.id, ...doc.data() });
-    });
-    
-    // Esto actualiza tu pantalla automáticamente con las tareas de la nube
-    if (typeof callbackRender === "function") {
-      callbackRender(tareas);
-    }
-  });
-}
 
 // 2. La configuración y la inicialización
 const firebaseConfig = {
