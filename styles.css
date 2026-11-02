@@ -290,7 +290,7 @@ body.dark-mode input[type="date"] {
 #auth-corner {
   position: absolute;
   top: 15px;
-  right: 20px;
+  right: 25px;
   z-index: 1000;
   display: flex;
   align-items: center;
