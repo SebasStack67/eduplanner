@@ -1,7 +1,4 @@
 // 1. Las importaciones de Firebase van obligatoriamente arriba del todo
-// 1. LOS IMPORTS VAN SIEMPRE ARRIBA DEL TODO
-import { collection, addDoc } from "firebase/firestore";
-// (Aquí también tienes tus otros imports de Firebase Auth, etc.)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { 
   getAuth, 
@@ -10,20 +7,6 @@ import {
   signOut, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-
-// 2. LA FUNCIÓN PUEDE IR MÁS ABAJO
-async function agregarTarea(titulo, userId) {
-  try {
-    await addDoc(collection(db, "tasks"), {
-      title: titulo,
-      userId: userId, 
-      completed: false,
-      createdAt: new Date()
-    });
-  } catch (error) {
-    console.error("Error al guardar la tarea en la nube:", error);
-  }
-}
 
 // 2. La configuración y la inicialización
 const firebaseConfig = {
