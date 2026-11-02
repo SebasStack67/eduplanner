@@ -2,270 +2,199 @@
 // 1. CONFIGURACIÓN E INICIALIZACIÓN (Versión Clásica v8)
 // ==========================================
 const firebaseConfig = {
-  apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
-  authDomain: "eduplanner-9d2ec.firebaseapp.com",
-  projectId: "eduplanner-9d2ec",
-  storageBucket: "eduplanner-9d2ec.firebasestorage.app",
-  messagingSenderId: "145593910568",
-  appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
+    apiKey: "TU_API_KEY",
+    authDomain: "eduplanner-9d2ec.firebaseapp.com",
+    projectId: "eduplanner-9d2ec",
+    storageBucket: "eduplanner-9d2ec.appspot.com",
+    messagingSenderId: "TU_MESSAGING_SENDER_ID",
+    appId: "TU_APP_ID"
 };
 
-// Inicializar Firebase clásico
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 const auth = firebase.auth();
 const db = firebase.firestore();
+let usuarioActual = null;
 
-console.log("EduPlanner: Versión clásica de Firebase conectada correctamente.");
-
-let usuarioActualUid = null;
 
 // ==========================================
 // 2. SELECCIÓN DE ELEMENTOS DEL DOM
 // ==========================================
-const formulario = document.getElementById("taskForm");
-const inputTarea = document.getElementById("tareaInput");
-const inputFecha = document.getElementById("fechaInput");
-const listaTareas = document.getElementById("listaTareas");
-const mensajeInicial = document.getElementById("mensajeInicial");
-const contadorTareas = document.getElementById("contadorTareas");
-const btnEliminarTodo = document.getElementById("btnEliminarTodo");
-const btnModoOscuro = document.getElementById("btnModoOscuro");
+const taskForm = document.getElementById('task-form');
+const taskInput = document.getElementById('task-input');
+const taskList = document.getElementById('task-list');
+const taskCounter = document.getElementById('task-counter'); // O el ID que uses para tu contador
+const btnLogin = document.getElementById('btn-login');
+const btnLogout = document.getElementById('btn-logout');
+const userEmailDisplay = document.getElementById('user-email');
+const themeToggleBtn = document.getElementById('theme-toggle');
+const btnDeleteAll = document.getElementById('btn-delete-all');
 
-// Elementos de Autenticación
-const openAuthBtn = document.getElementById("open-auth-btn");
-const authModal = document.getElementById("auth-modal");
-const closeAuthBtn = document.getElementById("close-auth-btn");
-const loginBtn = document.getElementById("login-btn");
-const registerBtn = document.getElementById("register-btn");
-const authEmail = document.getElementById("auth-email");
-const authPassword = document.getElementById("auth-password");
-const userInfo = document.getElementById("user-info");
-const userEmailSpan = document.getElementById("user-email");
-const logoutBtn = document.getElementById("logout-btn");
 
 // ==========================================
 // 3. MODO OSCURO
 // ==========================================
-if (localStorage.getItem("modoOscuro") === "activado") {
-    document.body.classList.add("dark-mode");
-    if (btnModoOscuro) btnModoOscuro.textContent = "☀️ Modo Claro";
-}
+function inicializarModoOscuro() {
+    const modoOscuroGuardado = localStorage.getItem('eduplanner_theme') === 'dark';
+    if (modoOscuroGuardado) {
+        document.body.classList.add('dark-mode');
+    }
 
-if (btnModoOscuro) {
-    btnModoOscuro.addEventListener("click", function() {
-        document.body.classList.toggle("dark-mode");
-        if (document.body.classList.contains("dark-mode")) {
-            localStorage.setItem("modoOscuro", "activado");
-            btnModoOscuro.textContent = "☀️ Modo Claro";
-        } else {
-            localStorage.setItem("modoOscuro", "desactivado");
-            btnModoOscuro.textContent = "🌙 Modo Oscuro";
-        }
-    });
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const esOscuro = document.body.classList.contains('dark-mode');
+            localStorage.setItem('eduplanner_theme', esOscuro ? 'dark' : 'light');
+        });
+    }
 }
+inicializarModoOscuro();
+
 
 // ==========================================
 // 4. FUNCIONES DE TAREAS Y CONTADOR
 // ==========================================
-function actualizarContador(totalTareas) {
-    if (contadorTareas) {
-        contadorTareas.textContent = totalTareas === 1 ? "1 tarea" : `${totalTareas} tareas`;
-    }
-
-    if (totalTareas === 0) {
-        if (mensajeInicial) mensajeInicial.style.display = "block";
-        if (btnEliminarTodo) btnEliminarTodo.style.display = "none";
-    } else {
-        if (mensajeInicial) mensajeInicial.style.display = "none";
-        if (btnEliminarTodo) btnEliminarTodo.style.display = "block";
+function actualizarContador(cantidad) {
+    if (taskCounter) {
+        taskCounter.textContent = cantidad;
     }
 }
 
-function renderizarTareasEnPantalla(tareas) {
-    if (!listaTareas) return;
-    
-    const elementosLi = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
-    elementosLi.forEach(li => li.remove());
+function renderizarTareas(tareas, esDeNube) {
+    if (!taskList) return;
 
-    tareas.forEach(item => {
-        const nuevaLi = document.createElement("li");
-        const infoDiv = document.createElement("div");
-        
-        const textoSpan = document.createElement("span");
-        textoSpan.className = "texto-tarea";
-        textoSpan.textContent = item.title;
-        infoDiv.appendChild(textoSpan);
+    taskList.innerHTML = '';
 
-        if (item.fecha) {
-            const fechaSpan = document.createElement("span");
-            fechaSpan.className = "fecha-tarea";
-            fechaSpan.textContent = item.fecha.startsWith("📅") ? item.fecha : `📅 ${item.fecha}`;
-            infoDiv.appendChild(fechaSpan);
-        }
+    if (tareas.length === 0) {
+        taskList.innerHTML = '<p class="sin-tareas">No hay tareas registradas.</p>';
+        actualizarContador(0);
+        return;
+    }
 
-        const botonCompletar = document.createElement("button");
-        botonCompletar.textContent = "✓ Completar";
-        botonCompletar.className = "btn-completar";
-
-        botonCompletar.addEventListener("click", async function() {
-            try {
-                await db.collection("tasks").doc(item.id).delete();
-            } catch (error) {
-                console.error("Error al eliminar la tarea de la nube:", error);
-            }
-        });
-
-        nuevaLi.appendChild(infoDiv);
-        nuevaLi.appendChild(botonCompletar);
-        listaTareas.appendChild(nuevaLi);
+    tareas.forEach((tarea) => {
+        const li = document.createElement('li');
+        li.className = 'tarea-item';
+        li.innerHTML = `
+            <span>${tarea.nombre}</span>
+            <button class="btn-eliminar" onclick="eliminarTarea('${tarea.id}', ${esDeNube})">Eliminar</button>
+        `;
+        taskList.appendChild(li);
     });
 
     actualizarContador(tareas.length);
 }
 
+function eliminarTarea(id, esDeNube) {
+    if (esDeNube) {
+        db.collection('tasks').doc(id).delete();
+    } else {
+        let tareasLocales = JSON.parse(localStorage.getItem('eduplanner_tareas_locales')) || [];
+        tareasLocales = tareasLocales.filter(tarea => tarea.id !== id);
+        localStorage.setItem('eduplanner_tareas_locales', JSON.stringify(tareasLocales));
+        cargarTareasLocalStorage();
+    }
+}
+
+
 // ==========================================
 // 5. CONEXIÓN CON FIRESTORE (NUBE)
 // ==========================================
-function escucharTareasFirestore(userId) {
-    db.collection("tasks")
-      .where("userId", "==", userId)
-      .onSnapshot((snapshot) => {
-        const tareas = [];
-        snapshot.forEach((docSnap) => {
-            tareas.push({ id: docSnap.id, ...docSnap.data() });
+function cargarTareasFirestore(uid) {
+    db.collection('tasks')
+        .where('userId', '==', uid)
+        .onSnapshot((snapshot) => {
+            let tareas = [];
+            snapshot.forEach((doc) => {
+                tareas.push({ id: doc.id, ...doc.data() });
+            });
+            renderizarTareas(tareas, true);
         });
-        renderizarTareasEnPantalla(tareas);
-    });
 }
 
-async function agregarTareaFirestore(titulo, fecha) {
-    if (!usuarioActualUid) {
-        alert("Debes iniciar sesión para guardar tareas en la nube.");
-        if (authModal) authModal.style.display = "flex";
-        return;
-    }
-
-    try {
-        await db.collection("tasks").add({
-            title: titulo,
-            fecha: fecha || "",
-            userId: usuarioActualUid,
-            completed: false,
-            createdAt: new Date()
-        });
-    } catch (error) {
-        console.error("Error al guardar la tarea:", error);
-    }
+function cargarTareasLocalStorage() {
+    let tareasLocales = JSON.parse(localStorage.getItem('eduplanner_tareas_locales')) || [];
+    renderizarTareas(tareasLocales, false);
 }
+
 
 // ==========================================
 // 6. EVENTO SUBMIT (AGREGAR TAREAS)
 // ==========================================
-if (formulario) {
-    formulario.addEventListener("submit", function(evento) {
-        evento.preventDefault();
+if (taskForm) {
+    taskForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const textoTarea = taskInput.value.trim();
 
-        const textoIngresado = inputTarea.value.trim();
-        const fechaIngresada = inputFecha.value;
+        if (textoTarea === '') return;
 
-        if (textoIngresado === "") {
-            alert("¡Atención! Debes escribir el nombre de una tarea.");
-            inputTarea.focus();
-            return;
+        if (usuarioActual) {
+            // Guardar en la nube (Firestore)
+            db.collection('tasks').add({
+                nombre: textoTarea,
+                userId: usuarioActual.uid,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                taskInput.value = '';
+            }).catch((error) => {
+                console.error("Error al guardar en Firestore:", error);
+            });
+        } else {
+            // Guardar localmente (LocalStorage)
+            let tareasLocales = JSON.parse(localStorage.getItem('eduplanner_tareas_locales')) || [];
+            const nuevaTarea = {
+                id: Date.now().toString(),
+                nombre: textoTarea
+            };
+            tareasLocales.push(nuevaTarea);
+            localStorage.setItem('eduplanner_tareas_locales', JSON.stringify(tareasLocales));
+
+            taskInput.value = '';
+            cargarTareasLocalStorage();
         }
-
-        const tareasArray = textoIngresado.split(",");
-
-        tareasArray.forEach(function(tareaTexto) {
-            const textoLimpio = tareaTexto.trim();
-            if (textoLimpio !== "") {
-                agregarTareaFirestore(textoLimpio, fechaIngresada);
-            }
-        });
-
-        inputTarea.value = "";
-        inputFecha.value = "";
-        inputTarea.focus();
     });
 }
+
 
 // ==========================================
 // 7. BOTÓN ELIMINAR TODO
 // ==========================================
-if (btnEliminarTodo) {
-    btnEliminarTodo.addEventListener("click", async () => {
-        if (!usuarioActualUid) return;
-        if (confirm("¿Estás seguro de que deseas borrar TODAS tus tareas de la nube?")) {
-            try {
-                const querySnapshot = await db.collection("tasks").where("userId", "==", usuarioActualUid).get();
-                const deletePromises = querySnapshot.docs.map(documentSnapshot => 
-                    documentSnapshot.ref.delete()
-                );
-                await Promise.all(deletePromises);
-            } catch (error) {
-                console.error("Error al eliminar todas las tareas:", error);
-            }
+if (btnDeleteAll) {
+    btnDeleteAll.addEventListener('click', () => {
+        if (usuarioActual) {
+            // Si está en la nube, se pueden borrar las de Firestore (opcional)
+            db.collection('tasks').where('userId', '==', usuarioActual.uid).get().then((snapshot) => {
+                snapshot.forEach((doc) => {
+                    doc.ref.delete();
+                });
+            });
+        } else {
+            // Si es local, limpia el localStorage
+            localStorage.removeItem('eduplanner_tareas_locales');
+            cargarTareasLocalStorage();
         }
     });
 }
+
 
 // ==========================================
 // 8. CONTROL DE AUTENTICACIÓN Y SESIÓN
 // ==========================================
-if (openAuthBtn && authModal) {
-    openAuthBtn.addEventListener("click", () => { authModal.style.display = "flex"; });
-}
-if (closeAuthBtn && authModal) {
-    closeAuthBtn.addEventListener("click", () => { authModal.style.display = "none"; });
-}
-
-if (registerBtn && authEmail && authPassword) {
-    registerBtn.addEventListener("click", async () => {
-        const email = authEmail.value;
-        const password = authPassword.value;
-        try {
-            await auth.createUserWithEmailAndPassword(email, password);
-            alert("¡Cuenta creada con éxito!");
-            if (authModal) authModal.style.display = "none";
-        } catch (error) {
-            alert("Error al registrarse: " + error.message);
-        }
-    });
-}
-
-if (loginBtn && authEmail && authPassword) {
-    loginBtn.addEventListener("click", async () => {
-        const email = authEmail.value;
-        const password = authPassword.value;
-        try {
-            await auth.signInWithEmailAndPassword(email, password);
-            alert("¡Sesión iniciada correctamente!");
-            if (authModal) authModal.style.display = "none";
-        } catch (error) {
-            alert("Error al iniciar sesión: " + error.message);
-        }
-    });
-}
-
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-        await auth.signOut();
-        alert("Sesión cerrada.");
-    });
-}
-
 auth.onAuthStateChanged((user) => {
     if (user) {
-        usuarioActualUid = user.uid;
-        if (openAuthBtn) openAuthBtn.style.display = "none";
-        if (userInfo) userInfo.style.display = "flex";
-        if (userEmailSpan) userEmailSpan.textContent = user.email;
+        usuarioActual = user;
+        if (userEmailDisplay) userEmailDisplay.textContent = user.email;
+        if (btnLogin) btnLogin.style.display = 'none';
+        if (btnLogout) btnLogout.style.display = 'inline-block';
 
-        escucharTareasFirestore(user.uid);
-    } else {s
-        usuarioActualUid = null;
-        if (openAuthBtn) openAuthBtn.style.display = "block";
-        if (userInfo) userInfo.style.display = "none";
-        renderizarTareasEnPantalla([]);
+        cargarTareasFirestore(user.uid);
+    } else {
+        usuarioActual = null;
+        if (userEmailDisplay) userEmailDisplay.textContent = '';
+        if (btnLogin) btnLogin.style.display = 'inline-block';
+        if (btnLogout) btnLogout.style.display = 'none';
+
+        cargarTareasLocalStorage();
     }
 });
