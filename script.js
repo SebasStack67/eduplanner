@@ -1,14 +1,6 @@
-// 1. Las importaciones de Firebase van obligatoriamente arriba del todo
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-
-// 2. La configuración y la inicialización
+// ==========================================
+// 1. CONFIGURACIÓN E INICIALIZACIÓN (Versión Clásica v8)
+// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
   authDomain: "eduplanner-9d2ec.firebaseapp.com",
@@ -18,67 +10,18 @@ const firebaseConfig = {
   appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Inicializar Firebase clásico
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-// 3. A partir de aquí hacia abajo puedes colocar el resto de tu código 
-// (como tus funciones de tareas, el modo oscuro, etc.)
+console.log("EduPlanner: Versión clásica de Firebase conectada correctamente.");
+
+let usuarioActualUid = null;
 
 // ==========================================
-// 2. EN EL MEDIO: Lógica del Modal y Botones
+// 2. SELECCIÓN DE ELEMENTOS DEL DOM
 // ==========================================
-const modal = document.getElementById("auth-modal");
-const btnAbrirModal = document.getElementById("open-auth-btn");
-const btnCerrarModal = document.getElementById("close-auth-btn");
-const userInfoDiv = document.getElementById("user-info");
-const userEmailSpan = document.getElementById("user-email");
-const btnLogout = document.getElementById("logout-btn");
-
-const emailInput = document.getElementById("auth-email");   
-const passwordInput = document.getElementById("auth-password"); 
-const btnRegistrar = document.getElementById("register-btn");
-const btnLogin = document.getElementById("login-btn");
-
-if (btnAbrirModal) btnAbrirModal.addEventListener("click", () => modal.style.display = "flex");
-if (btnCerrarModal) btnCerrarModal.addEventListener("click", () => modal.style.display = "none");
-window.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
-
-if (btnRegistrar) {
-  btnRegistrar.addEventListener("click", () => {
-    createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .then(() => { alert("¡Registro exitoso!"); modal.style.display = "none"; })
-      .catch((err) => alert("Error: " + err.message));
-  });
-}
-
-if (btnLogin) {
-  btnLogin.addEventListener("click", () => {
-    signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
-      .then(() => { modal.style.display = "none"; })
-      .catch((err) => alert("Error: " + err.message));
-  });
-}
-
-if (btnLogout) {
-  btnLogout.addEventListener("click", () => {
-    signOut(auth).then(() => alert("Has cerrado sesión"));
-  });
-}
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    if (btnAbrirModal) btnAbrirModal.style.display = "none";
-    if (userInfoDiv) userInfoDiv.style.display = "flex";
-    if (userEmailSpan) userEmailSpan.textContent = user.email;
-  } else {
-    if (btnAbrirModal) btnAbrirModal.style.display = "block";
-    if (userInfoDiv) userInfoDiv.style.display = "none";
-  }
-});
-
-console.log("EduPlanner: JavaScript conectado correctamente.");
-
-// Selección de elementos del DOM
 const formulario = document.getElementById("taskForm");
 const inputTarea = document.getElementById("tareaInput");
 const inputFecha = document.getElementById("fechaInput");
@@ -88,7 +31,21 @@ const contadorTareas = document.getElementById("contadorTareas");
 const btnEliminarTodo = document.getElementById("btnEliminarTodo");
 const btnModoOscuro = document.getElementById("btnModoOscuro");
 
-// --- 1. MODO OSCURO ---
+// Elementos de Autenticación
+const openAuthBtn = document.getElementById("open-auth-btn");
+const authModal = document.getElementById("auth-modal");
+const closeAuthBtn = document.getElementById("close-auth-btn");
+const loginBtn = document.getElementById("login-btn");
+const registerBtn = document.getElementById("register-btn");
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const userInfo = document.getElementById("user-info");
+const userEmailSpan = document.getElementById("user-email");
+const logoutBtn = document.getElementById("logout-btn");
+
+// ==========================================
+// 3. MODO OSCURO
+// ==========================================
 if (localStorage.getItem("modoOscuro") === "activado") {
     document.body.classList.add("dark-mode");
     if (btnModoOscuro) btnModoOscuro.textContent = "☀️ Modo Claro";
@@ -107,18 +64,15 @@ if (btnModoOscuro) {
     });
 }
 
-// --- 2. FUNCIONES DE CONTADOR Y ALMACENAMIENTO ---
-
-// Actualizar el número de tareas en pantalla y visibilidad de controles
-function actualizarContador() {
-    const tareas = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
-    const total = tareas.length;
-    
+// ==========================================
+// 4. FUNCIONES DE TAREAS Y CONTADOR
+// ==========================================
+function actualizarContador(totalTareas) {
     if (contadorTareas) {
-        contadorTareas.textContent = total === 1 ? "1 tarea" : `${total} tareas`;
+        contadorTareas.textContent = totalTareas === 1 ? "1 tarea" : `${totalTareas} tareas`;
     }
 
-    if (total === 0) {
+    if (totalTareas === 0) {
         if (mensajeInicial) mensajeInicial.style.display = "block";
         if (btnEliminarTodo) btnEliminarTodo.style.display = "none";
     } else {
@@ -127,133 +81,191 @@ function actualizarContador() {
     }
 }
 
-// Guardar tareas en localStorage (Guarda objeto con texto y fecha)
-function guardarTareasEnLocalStorage() {
-    const lis = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
-    const tareas = [];
+function renderizarTareasEnPantalla(tareas) {
+    if (!listaTareas) return;
     
-    lis.forEach(li => {
-        const texto = li.querySelector(".texto-tarea").textContent;
-        const fecha = li.querySelector(".fecha-tarea") ? li.querySelector(".fecha-tarea").textContent : "";
-        tareas.push({ texto, fecha });
-    });
-    
-    localStorage.setItem("misTareasEduPlanner", JSON.stringify(tareas));
-    actualizarContador();
-}
+    const elementosLi = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
+    elementosLi.forEach(li => li.remove());
 
-// Cargar tareas al abrir la página
-function cargarTareas() {
-    const tareasGuardadas = JSON.parse(localStorage.getItem("misTareasEduPlanner")) || [];
-    
-    tareasGuardadas.forEach(item => {
-        crearElementoEnDOM(item.texto, item.fecha);
-    });
-    
-    actualizarContador();
-}
+    tareas.forEach(item => {
+        const nuevaLi = document.createElement("li");
+        const infoDiv = document.createElement("div");
+        
+        const textoSpan = document.createElement("span");
+        textoSpan.className = "texto-tarea";
+        textoSpan.textContent = item.title;
+        infoDiv.appendChild(textoSpan);
 
-// Función auxiliar para construir el <li> en el DOM
-function crearElementoEnDOM(texto, fecha) {
-    if (mensajeInicial) mensajeInicial.style.display = "none";
+        if (item.fecha) {
+            const fechaSpan = document.createElement("span");
+            fechaSpan.className = "fecha-tarea";
+            fechaSpan.textContent = item.fecha.startsWith("📅") ? item.fecha : `📅 ${item.fecha}`;
+            infoDiv.appendChild(fechaSpan);
+        }
 
-    const nuevaLi = document.createElement("li");
-    
-    // Contenedor de información (Texto + Fecha)
-    const infoDiv = document.createElement("div");
-    
-    const textoSpan = document.createElement("span");
-    textoSpan.className = "texto-tarea";
-    textoSpan.textContent = texto;
-    infoDiv.appendChild(textoSpan);
+        const botonCompletar = document.createElement("button");
+        botonCompletar.textContent = "✓ Completar";
+        botonCompletar.className = "btn-completar";
 
-    if (fecha) {
-        const fechaSpan = document.createElement("span");
-        fechaSpan.className = "fecha-tarea";
-        fechaSpan.textContent = fecha.startsWith("📅") ? fecha : `📅 ${fecha}`;
-        infoDiv.appendChild(fechaSpan);
-    }
+        botonCompletar.addEventListener("click", async function() {
+            try {
+                await db.collection("tasks").doc(item.id).delete();
+            } catch (error) {
+                console.error("Error al eliminar la tarea de la nube:", error);
+            }
+        });
 
-    // Botón de completar
-    const botonCompletar = document.createElement("button");
-    botonCompletar.textContent = "✓ Completar";
-    botonCompletar.className = "btn-completar";
-
-    botonCompletar.addEventListener("click", function() {
-        nuevaLi.remove();
-        guardarTareasEnLocalStorage();
+        nuevaLi.appendChild(infoDiv);
+        nuevaLi.appendChild(botonCompletar);
+        listaTareas.appendChild(nuevaLi);
     });
 
-    nuevaLi.appendChild(infoDiv);
-    nuevaLi.appendChild(botonCompletar);
-    listaTareas.appendChild(nuevaLi);
+    actualizarContador(tareas.length);
 }
 
-// Cargar tareas iniciales
-cargarTareas();
+// ==========================================
+// 5. CONEXIÓN CON FIRESTORE (NUBE)
+// ==========================================
+function escucharTareasFirestore(userId) {
+    db.collection("tasks")
+      .where("userId", "==", userId)
+      .onSnapshot((snapshot) => {
+        const tareas = [];
+        snapshot.forEach((docSnap) => {
+            tareas.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        renderizarTareasEnPantalla(tareas);
+    });
+}
 
-// --- 3. EVENTO SUBMIT (AGREGAR TAREAS) ---
-formulario.addEventListener("submit", function(evento) {
-    evento.preventDefault();
-
-    const textoIngresado = inputTarea.value.trim();
-    const fechaIngresada = inputFecha.value;
-
-    if (textoIngresado === "") {
-        alert("¡Atención! Debes escribir el nombre de una tarea.");
-        inputTarea.focus();
+async function agregarTareaFirestore(titulo, fecha) {
+    if (!usuarioActualUid) {
+        alert("Debes iniciar sesión para guardar tareas en la nube.");
+        if (authModal) authModal.style.display = "flex";
         return;
     }
 
-    // Separación por comas
-    const tareasArray = textoIngresado.split(",");
+    try {
+        await db.collection("tasks").add({
+            title: titulo,
+            fecha: fecha || "",
+            userId: usuarioActualUid,
+            completed: false,
+            createdAt: new Date()
+        });
+    } catch (error) {
+        console.error("Error al guardar la tarea:", error);
+    }
+}
 
-    tareasArray.forEach(function(tareaTexto) {
-        const textoLimpio = tareaTexto.trim();
-        if (textoLimpio !== "") {
-            crearElementoEnDOM(textoLimpio, fechaIngresada);
+// ==========================================
+// 6. EVENTO SUBMIT (AGREGAR TAREAS)
+// ==========================================
+if (formulario) {
+    formulario.addEventListener("submit", function(evento) {
+        evento.preventDefault();
+
+        const textoIngresado = inputTarea.value.trim();
+        const fechaIngresada = inputFecha.value;
+
+        if (textoIngresado === "") {
+            alert("¡Atención! Debes escribir el nombre de una tarea.");
+            inputTarea.focus();
+            return;
         }
+
+        const tareasArray = textoIngresado.split(",");
+
+        tareasArray.forEach(function(tareaTexto) {
+            const textoLimpio = tareaTexto.trim();
+            if (textoLimpio !== "") {
+                agregarTareaFirestore(textoLimpio, fechaIngresada);
+            }
+        });
+
+        inputTarea.value = "";
+        inputFecha.value = "";
+        inputTarea.focus();
     });
+}
 
-    guardarTareasEnLocalStorage();
-
-    // Limpiar campos del formulario
-    inputTarea.value = "";
-    inputFecha.value = "";
-    inputTarea.focus();
-});
-
-// --- 4. BOTÓN ELIMINAR TODO ---
+// ==========================================
+// 7. BOTÓN ELIMINAR TODO
+// ==========================================
 if (btnEliminarTodo) {
-    btnEliminarTodo.addEventListener("click", function() {
-        if (confirm("¿Estás seguro de que deseas borrar TODAS las tareas pendientes?")) {
-            const tareas = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
-            tareas.forEach(li => li.remove());
-            guardarTareasEnLocalStorage();
+    btnEliminarTodo.addEventListener("click", async () => {
+        if (!usuarioActualUid) return;
+        if (confirm("¿Estás seguro de que deseas borrar TODAS tus tareas de la nube?")) {
+            try {
+                const querySnapshot = await db.collection("tasks").where("userId", "==", usuarioActualUid).get();
+                const deletePromises = querySnapshot.docs.map(documentSnapshot => 
+                    documentSnapshot.ref.delete()
+                );
+                await Promise.all(deletePromises);
+            } catch (error) {
+                console.error("Error al eliminar todas las tareas:", error);
+            }
         }
     });
 }
 
-// --- CONEXIÓN DE BOTONES CON ADDEXTENLISTENER ---
-document.addEventListener("DOMContentLoaded", () => {
-  
-  // 1. Botón de Modo Oscuro (Cambia "btn-modo-oscuro" por el ID de tu botón en el HTML)
-  const btnModoOscuro = document.getElementById("btn-modo-oscuro");
-  if (btnModoOscuro) {
-    btnModoOscuro.addEventListener("click", () => {
-      document.body.classList.toggle("dark-mode");
-    });
-  }
+// ==========================================
+// 8. CONTROL DE AUTENTICACIÓN Y SESIÓN
+// ==========================================
+if (openAuthBtn && authModal) {
+    openAuthBtn.addEventListener("click", () => { authModal.style.display = "flex"; });
+}
+if (closeAuthBtn && authModal) {
+    closeAuthBtn.addEventListener("click", () => { authModal.style.display = "none"; });
+}
 
-  // 2. Botón de Agregar Tareas (Cambia "btn-agregar-tarea" por el ID de tu botón)
-  const btnAgregarTarea = document.getElementById("btn-agregar-tarea");
-  if (btnAgregarTarea) {
-    btnAgregarTarea.addEventListener("click", () => {
-      // Llama aquí a tu función original que agrega tareas o pon la lógica directamente
-      console.log("Botón de tarea presionado");
+if (registerBtn && authEmail && authPassword) {
+    registerBtn.addEventListener("click", async () => {
+        const email = authEmail.value;
+        const password = authPassword.value;
+        try {
+            await auth.createUserWithEmailAndPassword(email, password);
+            alert("¡Cuenta creada con éxito!");
+            if (authModal) authModal.style.display = "none";
+        } catch (error) {
+            alert("Error al registrarse: " + error.message);
+        }
     });
-  }
+}
 
+if (loginBtn && authEmail && authPassword) {
+    loginBtn.addEventListener("click", async () => {
+        const email = authEmail.value;
+        const password = authPassword.value;
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            alert("¡Sesión iniciada correctamente!");
+            if (authModal) authModal.style.display = "none";
+        } catch (error) {
+            alert("Error al iniciar sesión: " + error.message);
+        }
+    });
+}
+
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+        await auth.signOut();
+        alert("Sesión cerrada.");
+    });
+}
+
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        usuarioActualUid = user.uid;
+        if (openAuthBtn) openAuthBtn.style.display = "none";
+        if (userInfo) userInfo.style.display = "flex";
+        if (userEmailSpan) userEmailSpan.textContent = user.email;
+
+        escucharTareasFirestore(user.uid);
+    } else {
+        usuarioActualUid = null;
+        if (openAuthBtn) openAuthBtn.style.display = "block";
+        if (userInfo) userInfo.style.display = "none";
+        renderizarTareasEnPantalla([]);
+    }
 });
-
-//git add . ; git commit -m "Conecta botones mediante addEventListener" ; git push
