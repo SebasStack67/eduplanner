@@ -1,4 +1,4 @@
-// 1. Importa Firebase y Auth usando la misma versión (13.1.0)
+// 1. Las importaciones de Firebase van obligatoriamente arriba del todo
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { 
   getAuth, 
@@ -8,7 +8,7 @@ import {
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 
-// 2. Tus credenciales reales de Firebase
+// 2. La configuración y la inicialización
 const firebaseConfig = {
   apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
   authDomain: "eduplanner-9d2ec.firebaseapp.com",
@@ -18,58 +18,11 @@ const firebaseConfig = {
   appId: "1:145593910568:web:fc5b9c83d12a480c9b3c1d"
 };
 
-// 3. Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// 4. Referencias del DOM para el Login y Registro
-const emailInput = document.getElementById("auth-email");
-const passwordInput = document.getElementById("auth-password");
-const loginBtn = document.getElementById("login-btn");
-const registerBtn = document.getElementById("register-btn");
-const logoutBtn = document.getElementById("logout-btn");
-const userInfo = document.getElementById("user-info");
-const authForms = document.getElementById("auth-forms");
-const userEmailSpan = document.getElementById("user-email");
-
-// 5. Registrar nuevo usuario
-registerBtn.addEventListener("click", async () => {
-  try {
-    await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    alert("¡Cuenta creada con éxito!");
-  } catch (error) {
-    alert("Error al registrar: " + error.message);
-  }
-});
-
-// 6. Iniciar sesión
-loginBtn.addEventListener("click", async () => {
-  try {
-    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    alert("¡Bienvenido de nuevo!");
-  } catch (error) {
-    alert("Error al iniciar sesión: " + error.message);
-  }
-});
-
-// 7. Cerrar sesión
-logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-  alert("Has cerrado sesión.");
-});
-
-// 8. Controlar la vista según la sesión
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    userInfo.style.display = "block";
-    authForms.style.display = "none";
-    userEmailSpan.textContent = user.email;
-  } else {
-    userInfo.style.display = "none";
-    authForms.style.display = "block";
-    userEmailSpan.textContent = "";
-  }
-});
+// 3. A partir de aquí hacia abajo puedes colocar el resto de tu código 
+// (como tus funciones de tareas, el modo oscuro, etc.)
 
 console.log("EduPlanner: JavaScript conectado correctamente.");
 
