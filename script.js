@@ -8,7 +8,6 @@ import {
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 
-
 // 2. La configuración y la inicialización
 const firebaseConfig = {
   apiKey: "AIzaSyBiYp-VfXK0t-_bROL2QK2fZHbFe5dSvyU",
