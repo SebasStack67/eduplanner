@@ -206,3 +206,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 //git add . ; git commit -m "Conecta botones mediante addEventListener" ; git push//
 
+// --- REGISTRO DE USUARIOS EN FIREBASE ---
+const formRegistro = document.getElementById("form-registro"); // Cambia por el ID de tu formulario
+const emailInput = document.getElementById("registro-email");   // Cambia por el ID de tu input de correo
+const passwordInput = document.getElementById("registro-password"); // Cambia por el ID de tu input de clave
+
+if (formRegistro) {
+  formRegistro.addEventListener("submit", (e) => {
+    e.preventDefault(); // Evita que la página se recargue sola
+
+    const email = emailInput.value;
+    const password = passwordInput.value;
+
+    // Crear usuario en Firebase
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        alert("¡Registro exitoso! Bienvenido: " + user.email);
+        console.log("Usuario creado:", user);
+      })
+      .catch((error) => {
+        console.error("Error al registrar:", error.message);
+        alert("Error al registrar: " + error.message);
+      });
+  });
+}
