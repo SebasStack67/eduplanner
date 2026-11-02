@@ -1,12 +1,12 @@
-// 1. IMPORTACIONES DE FIREBASE (Obligatoriamente arriba del todo)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+// 1. IMPORTACIONES DE FIREBASE CORREGIDAS (Versión 10.8.0 estable)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getAuth, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
   getFirestore, 
   collection, 
@@ -16,7 +16,7 @@ import {
   query, 
   where, 
   onSnapshot 
-} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // 2. CONFIGURACIÓN E INICIALIZACIÓN
 const firebaseConfig = {
@@ -93,15 +93,12 @@ function actualizarContador(totalTareas) {
     }
 }
 
-// Función auxiliar para construir el <li> en el DOM conectado a Firestore
 function renderizarTareasEnPantalla(tareas) {
-    // Limpiamos la lista actual (excepto el mensaje inicial)
     const elementosLi = listaTareas.querySelectorAll("li:not(#mensajeInicial)");
     elementosLi.forEach(li => li.remove());
 
     tareas.forEach(item => {
         const nuevaLi = document.createElement("li");
-        
         const infoDiv = document.createElement("div");
         
         const textoSpan = document.createElement("span");
@@ -116,7 +113,6 @@ function renderizarTareasEnPantalla(tareas) {
             infoDiv.appendChild(fechaSpan);
         }
 
-        // Botón de completar / eliminar de Firestore
         const botonCompletar = document.createElement("button");
         botonCompletar.textContent = "✓ Completar";
         botonCompletar.className = "btn-completar";
@@ -137,7 +133,7 @@ function renderizarTareasEnPantalla(tareas) {
     actualizarContador(tareas.length);
 }
 
-// --- 3. CONEXIÓN CON FIREBASE FIRESTORE (SINCRONIZACIÓN) ---
+// --- 3. CONEXIÓN CON FIREBASE FIRESTORE ---
 function escucharTareasFirestore(userId) {
     const q = query(collection(db, "tasks"), where("userId", "==", userId));
     
@@ -184,7 +180,6 @@ if (formulario) {
             return;
         }
 
-        // Separación por comas
         const tareasArray = textoIngresado.split(",");
 
         tareasArray.forEach(function(tareaTexto) {
@@ -194,14 +189,13 @@ if (formulario) {
             }
         });
 
-        // Limpiar campos del formulario
         inputTarea.value = "";
         inputFecha.value = "";
         inputTarea.focus();
     });
 }
 
-// --- 5. CONTROL DE AUTENTICACIÓN (LOGIN / REGISTRO) ---
+// --- 5. CONTROL DE AUTENTICACIÓN ---
 if (openAuthBtn && authModal) {
     openAuthBtn.addEventListener("click", () => { authModal.style.display = "flex"; });
 }
@@ -244,7 +238,6 @@ if (logoutBtn) {
     });
 }
 
-// Observador del estado de sesión en tiempo real
 onAuthStateChanged(auth, (user) => {
     if (user) {
         usuarioActualUid = user.uid;
@@ -252,7 +245,6 @@ onAuthStateChanged(auth, (user) => {
         if (userInfo) userInfo.style.display = "flex";
         if (userEmailSpan) userEmailSpan.textContent = user.email;
 
-        // Activa la sincronización en tiempo real para las tareas de este usuario
         escucharTareasFirestore(user.uid);
     } else {
         usuarioActualUid = null;
